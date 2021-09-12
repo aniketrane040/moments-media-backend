@@ -5,6 +5,10 @@ const userSchema = mongoose.Schema({
   email: { type: [String], required: true },
   password: { type: String, required: true },
   id: { type: String },
+  followers: { type: [String] },
+  following: { type: [String] },
+  profilePic: { type: String },
+  description: { type: String , default: "Hello! Nice to have you on Memories"}
 });
 
 export default mongoose.model("User", userSchema);
