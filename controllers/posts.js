@@ -1,5 +1,17 @@
 import PostMessage from '../models/postMessage.js';
 import mongoose from 'mongoose';
+import schedule from 'node-schedule';
+import mail from 'nodemailer';
+
+const transporter = mail.createTransport(
+    {
+        service: 'gmail',
+        auth:
+        {
+            user: process.env.EMAIL_USER_ID,
+            pass: process.env.PASSWORD
+        }
+    });
 
 export const getPost = async (req, res) => {
     const { id } = req.params;
@@ -28,10 +40,10 @@ export const getPosts = async (req, res) => {
     }
 }
 
-export const getPostsOfUser = async (req,res) => {
+export const getPostsOfUser = async (req, res) => {
     const { userId } = req.params;
     try {
-        const posts_of_user = await PostMessage.find({ creator : userId });
+        const posts_of_user = await PostMessage.find({ creator: userId });
         res.status(200).json(posts_of_user);
     } catch (error) {
         res.status(404).json({ message: error.message });
@@ -141,4 +153,35 @@ export const commentPost = async (req, res) => {
         console.log(error);
         res.status(409).json({ message: error.message });
     }
+}
+
+export const sharePost = async (req, res) => {
+    const { id, shareData } = req.body;
+    try {
+        const scheduleDate = new Date(shareData.date);
+        var sendingMessage = "Hello" + shareData.name + "\n\tsomeone would like to share their precious moments with you,Hope you love it!\n" + shareData.eventMessage;
+        console.log(scheduleDate);
+        schedule.scheduleJob(scheduleDate, () => {
+            var share_url = `http://localhost:3000/posts/${id}`;
+            console.log(share_url);
+            const mailOptions = {
+                from: process.env.EMAIL_USER_ID,
+                to: shareData.mailId,
+                subject: 'Sharing Precious moments with their Loved Once ! ',
+                text: sendingMessage
+            };
+            transporter.sendMail(mailOptions,(error,info) => {
+                if(error) {
+                    console.log('error occured');
+                } else {
+                    console.log('mail sent');
+                }
+            });
+        })
+        res.status(200).json(shareData);
+    } catch (error) {
+        console.log(error);
+        res.status(409).json({ message: error.message });
+    }
+
 }
